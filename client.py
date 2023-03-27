@@ -49,7 +49,7 @@ def main():
 
         # get user id and send Connect request to server
 
-        userId = Connect(userId, sock)
+        userId = Connect(sock)
 
         while True:
             # wait for input
