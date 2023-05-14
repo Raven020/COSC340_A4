@@ -1,18 +1,16 @@
 import socket
-
+import sys
 ''' 
 Connect - Upon starting client will retrieve userID from user then
-send 'CONNECT userID' to server to connect
+        send 'CONNECT userID' to server to connect
 Put - PUT {key} then client will prompt user for value to put before sending
 Get - GET {key} then client will send to server to retrieve value if there is one
 Delete - DELETE {key} then client will send to server to delete value at given key
 Disconnect - DISCONNECT then client will send to server to disconnect from server
 
-
-
 '''
 HOST = '127.0.0.1'
-PORT = 1234
+port = None
 PROTOCOL = ['PUT', 'GET', 'DELETE', 'DISCONNECT']
 RESPONSES = ['OK', 'ERROR']
 
@@ -45,32 +43,46 @@ def Disconnect(sock):
     return None
 
 
+'''
+ProcessData - takes data entered by user and then verifies whether it is valid or not
+'''
+
+
 def ProcessData(data):
     dataItems = data.split(" : ")
     action = dataItems[0]
     status = dataItems[1]
-    # TODO get doesn't return OK just the value. What should the process be for GET actions
+
     if action in PROTOCOL or action != "GET" and status not in RESPONSES:
         if action == "DISCONNECT":
             print(data)
-            exit()
+            sys.exit()
+
         return True
     return False
 
 
 def main():
+    try:
+        port = int(sys.argv[1])
+    except ValueError:
+        print("command line argument needs to contain PORT number, e.g. 1234")
+        print("please try again in format python client.py PORT_NUM")
+        sys.exit()
+
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.connect((HOST, PORT))
+        sock.connect((HOST, port))
 
         # get user id and send Connect request to server
 
         userId = Connect(sock)
         data = sock.recv(2048).decode('utf-8')
         if(data == 'CONNECT : OK'):
+            # Main loop, will continue until client DISCONNECT
             while True:
                 # wait for input
                 userInput = input('Enter input: ')
-                if userInput == '' or ' ' not in userInput:
+                if userInput == '' or ' ' not in userInput and userInput.upper() not in PROTOCOL:
                     print('Not a valid Input Please try again')
                     continue
                 userWords = userInput.split()
@@ -87,6 +99,7 @@ def main():
                     elif userWords[0] == 'DISCONNECT':
                         Disconnect(sock)
                 else:
+                    # if input not in protocol then notify user that it was not valid
                     print('Not a valid Input Please try again')
                     continue
                 data = sock.recv(2048).decode('utf-8')
