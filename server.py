@@ -1,6 +1,8 @@
 import sys
 import socket
-
+import hmac
+import secrets
+import hashlib
 '''
 CONNECT {userId} - Server will create or open file with that userID into memory, return OK to client
 PUT {key} value - Server will store the value under the key in memory, to be saved later, return OK to client
@@ -12,7 +14,10 @@ DISCONNECT - Disconnect from the client, return OK to client
 
 '''
     TODO
-    HMAC algorithm 
+    HMAC
+    DH
+    passwords - client will send a hashed password, salt then pepper then compare to stored password
+
 '''
 
 
@@ -20,6 +25,16 @@ HOST = ''
 port = None
 User = str()  # username
 Storage = dict()  # the that is in data in memory
+KEY = 'LnKfzaiHSt_5EvLcNuSWkCe5J44qvKQQCWNLDt2X0WkDkt3QjuNoRN05jGrncwQ3pD_yI2sZKGKe98OnOOr35PBJYtlzr080Qa_C7FjAXHX90Eeb5MgAkz1RvTWuVc5k52eSm8_Eia4lV_VRihoCsW4E_adROg4Vot0gptuMXf4'
+
+
+def signMessage(data):
+    '''
+    signMessage takes data and returns a hmac to be prepended to a message
+    before it is sent
+    '''
+    signedMessage = hmac.new(KEY, bytes(data, 'utf8'), hashlib.sha256)
+    return signedMessage
 
 
 def Connect(userID, sock):
@@ -76,6 +91,25 @@ def Disconnect(userID, sock):
     sock.sendall(b'DISCONNECT : OK')
     sock.close()
     Storage.clear()
+    return None
+
+
+def CheckAuth(data, sock):
+    '''
+    CheckAuth, verifies message via hmac
+    data will be sent in format
+    "
+    AUTH : hmac
+    ACTION : val
+    "
+    '''
+    dataLines = data.splitlines()
+    signature = dataLines[0].split(" : ")[1]
+    message = dataLines[1].split(" : ")[1]
+    if(hmac.new(KEY, message, hashlib.sha256).digest() == signature):
+        # if HMACS match
+        return True
+
     return None
 
 

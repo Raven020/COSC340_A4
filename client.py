@@ -1,5 +1,8 @@
 import socket
 import sys
+import hmac
+import secrets
+import hashlib
 ''' 
 Connect - Upon starting client will retrieve userID from user then
         send 'CONNECT userID' to server to connect
@@ -13,6 +16,16 @@ HOST = '127.0.0.1'
 port = None
 PROTOCOL = ['PUT', 'GET', 'DELETE', 'DISCONNECT']
 RESPONSES = ['OK', 'ERROR']
+KEY = 'LnKfzaiHSt_5EvLcNuSWkCe5J44qvKQQCWNLDt2X0WkDkt3QjuNoRN05jGrncwQ3pD_yI2sZKGKe98OnOOr35PBJYtlzr080Qa_C7FjAXHX90Eeb5MgAkz1RvTWuVc5k52eSm8_Eia4lV_VRihoCsW4E_adROg4Vot0gptuMXf4'
+
+
+def signMessage(data):
+    '''
+    signMessage takes data and returns a hmac to be prepended to a message
+    before it is sent
+    '''
+    signedMessage = hmac.new(KEY, bytes(data, 'utf8'), hashlib.sha256).digest()
+    return signedMessage
 
 
 def Connect(sock):
